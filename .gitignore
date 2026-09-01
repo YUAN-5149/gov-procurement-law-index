@@ -1,0 +1,11 @@
+# 擷取用暫存原始頁面
+raw_*.html
+pcc_*.html
+*.log
+
+# OS / 編輯器
+Thumbs.db
+Desktop.ini
+.DS_Store
+.vscode/
+.idea/
