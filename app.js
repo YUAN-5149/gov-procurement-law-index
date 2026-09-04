@@ -205,6 +205,7 @@ function buildNav() {
         </div></div>`;
     }).join('') +
     `<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">
+      <button class="navcat" data-view="dg"><span class="ci">圖</span><span class="cn">圖解流程</span></button>
       <button class="navcat" data-view="memo"><span class="ci">記</span><span class="cn">重點速記卡</span></button>
       <button class="navcat" data-view="cmp2"><span class="ci">比</span><span class="cn">易混淆概念比較</span></button>
       <button class="navcat" data-view="cmp"><span class="ci">⇄</span><span class="cn">母法／細則對照表</span></button>
@@ -263,9 +264,11 @@ function viewHome() {
       </tbody></table></div>
     </div>
 
-    <div class="card"><h3><span class="dot"></span>四個記憶工具</h3>
-      <p class="hint">為「熟記 ＋ 比較」設計的四個檢視。</p>
+    <div class="card"><h3><span class="dot"></span>五個記憶工具</h3>
+      <p class="hint">為「熟記 ＋ 比較」設計的五個檢視。先看圖建立骨架，再用表格與題目補細節。</p>
       <table class="t"><tbody>
+        <tr><td class="k"><button class="ref" data-view="dg">圖解流程</button></td>
+            <td>${D.diagrams.length} 張手繪流程圖：金額級距、招標決策樹、等標期、比減價格、驗收時程、爭議雙軌、停權流程、組織關係、GPA 判斷。瀏覽各分類時也會出現在最上方。</td></tr>
         <tr><td class="k"><button class="ref" data-view="memo">重點速記卡</button></td>
             <td>${D.memo.length} 張高頻考點整併表：金額級距、招標方式、§22 十六款、等標期、比減價、保證金、驗收期限、停權、罰則、GPA。每格都可點回原條文。</td></tr>
         <tr><td class="k"><button class="ref" data-view="cmp2">易混淆概念比較</button></td>
@@ -321,6 +324,9 @@ function viewCat(cid) {
    <div class="lawhead"><h2>${c.code}　${esc(c.name)}</h2>
      <div class="lawmeta"><span>${esc(c.desc || '')}</span>
      <span>共 <b>${IDX.filter(r => r.cats.indexOf(cid) >= 0).length}</b> 條</span></div></div>`;
+
+  const dg = D.diagrams.find(x => x.cat === cid);
+  if (dg) out += dgCard(dg, true);
 
   if (c.intro) out += `<div class="card" style="margin-bottom:16px"><h3><span class="dot"></span>本章重點</h3>
     <div style="font-size:13.5px;line-height:1.95;color:var(--ink2)">${c.intro}</div></div>`;
@@ -552,6 +558,36 @@ function viewQuiz() {
     </div>${stat}</div>`;
 }
 
+/* ---------- 圖解流程 ---------- */
+let DG = { id: null };
+function dgFigure(d) {
+  return `<figure class="dg">
+    <div class="hint-scroll">← 左右滑動可看完整流程圖 →</div>
+    <div class="svgwrap">${d.svg}</div>
+    <figcaption>${esc(d.cap)}</figcaption></figure>`;
+}
+function dgCard(d, withTitle) {
+  const cat = D.cats.find(c => c.id === d.cat);
+  return `<div class="dgcard">
+    ${withTitle ? `<h3><span class="dot"></span>${esc(d.t)}
+      ${cat ? `<span class="pill" style="font-weight:700">${esc(cat.name)}</span>` : ''}</h3>` : ''}
+    ${dgFigure(d)}</div>`;
+}
+function viewDiagrams() {
+  const list = D.diagrams;
+  if (!DG.id || !list.some(x => x.id === DG.id)) DG.id = list[0].id;
+  const d = list.find(x => x.id === DG.id);
+  return `<div class="crumb">工具</div>
+  <div class="lawhead"><h2>圖解流程</h2>
+    <div class="lawmeta"><span>${list.length} 張流程圖　·　每張對應一個分類的核心機制</span>
+      <span class="pill">學習整理</span></div></div>
+  <div class="dgnav">${list.map(x => {
+      const c = D.cats.find(y => y.id === x.cat);
+      return `<button class="chip${x.id === DG.id ? ' on' : ''}" data-dg="${x.id}">${c ? esc(c.code) + ' ' : ''}${esc(x.t.split('：')[0])}</button>`;
+    }).join('')}</div>
+  ${dgCard(d, true)}`;
+}
+
 /* ---------- 易混淆概念比較 ---------- */
 let CMP = { id: null };
 function viewCompare() {
@@ -586,6 +622,7 @@ function render() {
   else if (S.view === 'memo') html = viewMemo();
   else if (S.view === 'cmp') html = viewCmp();
   else if (S.view === 'cmp2') html = viewCompare();
+  else if (S.view === 'dg') html = viewDiagrams();
   else if (S.view === 'quiz') html = viewQuiz();
   else if (S.view === 'marks') html = viewMarks();
   else html = viewHome();
@@ -635,6 +672,7 @@ $$('#scoperow .chip[data-scope]').forEach(b => b.addEventListener('click', () =>
   render();
 }));
 $('#btnCmp').addEventListener('click', () => { S.q = ''; $('#q').value = ''; S.view = 'cmp2'; render(); window.scrollTo({top:0}); });
+$('#btnDg').addEventListener('click', () => { S.q = ''; $('#q').value = ''; S.view = 'dg'; render(); window.scrollTo({top:0}); });
 $('#btnMemo').addEventListener('click', () => { S.q = ''; $('#q').value = ''; S.view = 'memo'; render(); window.scrollTo({top:0}); });
 $('#btnQuiz').addEventListener('click', () => { S.q = ''; $('#q').value = ''; S.view = 'quiz'; render(); window.scrollTo({top:0}); });
 $('#btnTheme').addEventListener('click', () => {
@@ -648,7 +686,7 @@ $('#mob').addEventListener('click', () => { $('#side').classList.toggle('open');
 $('#scrim').addEventListener('click', closeSide);
 
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-go],[data-cat],[data-law],[data-view],[data-home],[data-mark],[data-copy],[data-qa],[data-qs],[data-qm],[data-pick],[data-cmp],#clearMarks');
+  const t = e.target.closest('[data-go],[data-cat],[data-law],[data-view],[data-home],[data-mark],[data-copy],[data-qa],[data-qs],[data-qm],[data-pick],[data-cmp],[data-dg],#clearMarks');
   if (!t) return;
   if (t.dataset.go) { goto(t.dataset.go); return; }
   if (t.id === 'clearMarks') { if (confirm('確定清除全部標記？')) { marks.clear(); saveMarks(); render(); } return; }
@@ -680,6 +718,7 @@ document.addEventListener('click', e => {
   if (t.dataset.home !== undefined && t.hasAttribute('data-home')) { S.q = ''; $('#q').value = ''; S.view = 'home'; S.lid = null; S.cat = null; render(); window.scrollTo({ top: 0 }); closeSide(); return; }
   if (t.dataset.view) { S.q = ''; $('#q').value = ''; S.view = t.dataset.view; render(); window.scrollTo({ top: 0 }); closeSide(); return; }
   if (t.dataset.cmp) { CMP.id = t.dataset.cmp; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  if (t.dataset.dg) { DG.id = t.dataset.dg; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   if (t.dataset.qs) { QZ.scope = t.dataset.qs; buildPool(); render(); return; }
   if (t.dataset.qm) { QZ.mode = t.dataset.qm; buildPool(); render(); return; }
   if (t.dataset.pick != null && t.hasAttribute('data-pick')) {

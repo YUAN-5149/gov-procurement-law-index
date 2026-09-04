@@ -172,6 +172,23 @@ mark{background:var(--mark);color:var(--mark-ink);border-radius:2px;padding:0 1p
 .g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
 .grid>.card.wide{grid-column:1/-1}
 
+/* 圖解 */
+figure.dg{margin:0}
+figure.dg .svgwrap{overflow-x:auto;background:var(--bg);border:1px solid var(--line);
+  border-radius:10px;padding:16px 14px}
+figure.dg svg{display:block;margin:0 auto}
+figure.dg .hint-scroll{display:none;font-size:11px;color:var(--ink3);margin-bottom:7px;
+  letter-spacing:.04em}
+@media(max-width:900px){figure.dg .hint-scroll{display:block}}
+figure.dg figcaption{font-size:12.5px;line-height:1.85;color:var(--ink3);margin-top:11px;
+  padding-left:11px;border-left:3px solid var(--accent)}
+.dgnav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.dgcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:16px 18px;margin-bottom:16px}
+.dgcard>h3{margin:0 0 12px;font-size:15px;font-weight:900;display:flex;align-items:center;gap:8px}
+.dgcard>h3 .dot{width:8px;height:8px;border-radius:2px;background:var(--accent);flex:0 0 8px}
+@media print{figure.dg .svgwrap{overflow:visible;border:none;background:none}}
+
 /* 表格式（ASCII）條文 */
 .mono{font-family:var(--mono);font-size:12px;line-height:1.5;white-space:pre;overflow-x:auto;
   background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:0}
@@ -305,6 +322,7 @@ table.t td.k{font-weight:700;color:var(--ink);white-space:nowrap}
             placeholder="搜尋條文關鍵字，或輸入「50」「第50條」直接跳條號…">
           <span class="kbd"><b>Ctrl</b><b>K</b></span>
         </div>
+        <button class="tbtn" id="btnDg" title="圖解流程">圖解</button>
         <button class="tbtn" id="btnMemo" title="速記卡">速記</button>
         <button class="tbtn" id="btnQuiz" title="自我測驗">測驗</button>
         <button class="tbtn" id="btnTheme" title="切換深淺色">◐</button>

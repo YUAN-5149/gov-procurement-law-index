@@ -8,6 +8,7 @@ spec2 = importlib.util.spec_from_file_location('pcc_parse', 'pcc_parse.py')
 PCC = importlib.util.module_from_spec(spec2); spec2.loader.exec_module(PCC)
 from content_compare import COMPARE
 from content_quiz import Q as QUIZ
+from content_diagram import DIAGRAMS
 
 OUT = r'C:\Users\TFD\notebookLM\政府採購法令彙編\data.js'
 
@@ -421,7 +422,7 @@ data = dict(
          '速記卡、概念比較、WTO GPA 導讀與選擇題為學習用整理及自製練習題，非法規原文亦非官方考古題；'
          '引用金額、期限請以最新法規及主管機關公告為準。已廢止或停止適用之法規未收錄。'
          '「採購契約要項」及各類採購契約範本係以函頒方式發布，不在上述兩個法規資料庫中，故未收錄。'),
-  cats=CATS, memo=MEMO, compare=COMPARE, laws=laws,
+  cats=CATS, memo=MEMO, compare=COMPARE, diagrams=DIAGRAMS, laws=laws,
   quiz=[{'c': c, 'q': q, 'o': list(o), 'a': a, 'e': e, 'r': r} for c, q, o, a, e, r in QUIZ])
 
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
@@ -431,4 +432,4 @@ with open(OUT, 'w', encoding='utf-8') as f:
     f.write(';\n')
 print('written', OUT, os.path.getsize(OUT), 'bytes')
 print('laws:', len(laws), 'articles:', sum(len(l['articles']) for l in laws))
-print('memo:', len(MEMO), 'compare:', len(COMPARE), 'quiz:', len(QUIZ))
+print('memo:', len(MEMO), 'compare:', len(COMPARE), 'quiz:', len(QUIZ), 'diagrams:', len(DIAGRAMS))
