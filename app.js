@@ -181,7 +181,7 @@ function artHTML(a, terms) {
         <button class="iact" data-copy="${key}" title="複製條文">⧉</button>
       </span>
     </div>
-    <div class="artbody">${body}</div>${relHTML}</article>`;
+    <div class="artbody">${body}</div>${relHTML}${lettersForArticle(a)}</article>`;
 }
 
 /* ================== 導覽列 ================== */
@@ -209,6 +209,7 @@ function buildNav() {
     `<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">
       <button class="navcat" data-view="journey"><span class="ci">路</span><span class="cn">採購旅程 · 圖像記憶</span></button>
       <button class="navcat" data-view="dg"><span class="ci">圖</span><span class="cn">圖解流程</span></button>
+      <button class="navcat" data-view="lt"><span class="ci">釋</span><span class="cn">工程會解釋函令</span><span class="cc">${LETTERS.length}</span></button>
       <button class="navcat" data-view="memo"><span class="ci">記</span><span class="cn">重點速記卡</span></button>
       <button class="navcat" data-view="cmp2"><span class="ci">比</span><span class="cn">易混淆概念比較</span></button>
       <button class="navcat" data-view="cmp"><span class="ci">⇄</span><span class="cn">母法／細則對照表</span></button>
@@ -267,8 +268,8 @@ function viewHome() {
       </tbody></table></div>
     </div>
 
-    <div class="card"><h3><span class="dot"></span>五個記憶工具</h3>
-      <p class="hint">為「熟記 ＋ 比較」設計的五個檢視。先看圖建立骨架，再用表格與題目補細節。</p>
+    <div class="card"><h3><span class="dot"></span>六個學習工具</h3>
+      <p class="hint">先看圖建立骨架，再用表格與題目補細節，最後用函釋看實務怎麼認定。</p>
       <table class="t"><tbody>
         <tr><td class="k"><button class="ref" data-view="dg">圖解流程</button></td>
             <td>${D.diagrams.length} 張手繪流程圖：金額級距、招標決策樹、等標期、比減價格、驗收時程、爭議雙軌、停權流程、組織關係、GPA 判斷。瀏覽各分類時也會出現在最上方。</td></tr>
@@ -277,7 +278,9 @@ function viewHome() {
         <tr><td class="k"><button class="ref" data-view="cmp2">易混淆概念比較</button></td>
             <td>${D.compare.length} 組並排比較表：異議/申訴/調解/仲裁、轉包/分包、四種保證金、廢標/不予開標/不決標、初驗/驗收/減價收受、五個小組等。</td></tr>
         <tr><td class="k"><button class="ref" data-view="cmp">母法／細則對照表</button></td>
-            <td>依程式自動解析「本法第○條」引用關係，列出母法每一條對應的施行細則與子法條文。</td></tr>
+            <td>依程式自動解析「本法第○條」引用關係，列出母法每一條對應的施行細則、子法條文，以及工程會函釋則數。</td></tr>
+        <tr><td class="k"><button class="ref" data-view="lt">工程會解釋函令</button></td>
+            <td>${LETTERS.length} 則函釋索引，對應 ${Object.keys(LBYART).length} 個採購法條號。可依條號篩選或搜尋主旨與發文字號；全文連回政府電子採購網。</td></tr>
         <tr><td class="k"><button class="ref" data-view="quiz">自我測驗</button></td>
             <td><b>${D.quiz.length} 題選擇題</b>（附詳解與條文連結）＋ 條號翻牌卡；可限定分類或只考已標記的重點。</td></tr>
       </tbody></table>
@@ -376,13 +379,23 @@ function viewSearch(q) {
     gm[r.rec.lid].items.push(r);
   });
   const scopeName = { all: '全部法規', law: '本法規', cat: '本分類', mark: '我的重點' }[S.scope];
+  let ltHTML = '';
+  if (S.scope === 'all' && terms.length) {
+    const lts = LETTERS.filter(x => terms.every(t => (x.s + ' ' + (x.n || '')).indexOf(t) >= 0));
+    if (lts.length) {
+      ltHTML = `<div class="resgrp"><h4>工程會解釋函令<span class="n">${lts.length}</span></h4>` +
+        `<div class="ltlist">${lts.slice(0, 8).map(x => ltRow(x, terms)).join('')}</div>` +
+        (lts.length > 8 ? `<div style="margin-top:8px"><button class="tbtn" data-lt=""
+            data-ltq="${esc(q)}">在函釋檢索中查看全部 ${lts.length} 則 →</button></div>` : '') + `</div>`;
+    }
+  }
   return `<div class="rescount">在<b> ${scopeName} </b>中找到 <b>${res.length}</b> 條符合「${esc(q)}」，分佈於 ${groups.length} 部法規</div>` +
     groups.map(g => `<div class="resgrp"><h4>${esc(g.lt)}<span class="n">${g.items.length}</span></h4>` +
       g.items.slice(0, 40).map(r => `<button class="res" data-go="${r.rec.lid}#${r.rec.no}">
         <span class="rno">${esc(r.rec.label)}</span><span class="rch">${esc(r.rec.ch || '')}</span>
         <div class="rtx">${hl(snippet(r.rec.text, terms), terms)}</div></button>`).join('') +
       (g.items.length > 40 ? `<div style="font-size:11.5px;color:var(--ink3);padding:4px 2px">…另有 ${g.items.length - 40} 條，請再加關鍵字縮小範圍</div>` : '') +
-      `</div>`).join('');
+      `</div>`).join('') + ltHTML;
 }
 
 function viewMarks() {
@@ -407,25 +420,31 @@ function viewCmp() {
     const rel = REV['A0030057#' + a.no] || [];
     const det = rel.filter(r => r.lid === 'A0030058');
     const sub = rel.filter(r => r.lid !== 'A0030058');
-    if (!rel.length) return;
+    const lt = LBYART[a.no] || [];
+    if (!rel.length && !lt.length) return;
     rows += `<tr>
       <td class="k"><button class="ref" style="font-weight:800;font-size:12.5px" data-go="A0030057#${a.no}">${esc(a.label)}</button>
         <div style="font-size:10.5px;color:var(--ink3);font-weight:400;max-width:190px;line-height:1.5">${esc(a.lines[0].slice(0, 34))}…</div></td>
       <td>${det.length ? det.map(r => `<button class="relchip" data-go="${r.lid}#${r.no}">${esc(r.label)}</button>`).join(' ') : '<span style="color:var(--ink3)">—</span>'}</td>
       <td>${sub.length ? sub.map(r => `<button class="relchip" data-go="${r.lid}#${r.no}">${esc(r.ls)}${esc(r.label)}</button>`).join(' ') : '<span style="color:var(--ink3)">—</span>'}</td>
+      <td>${lt.length
+        ? `<button class="relchip" data-lt="${a.no}" data-ltgo="1"><span class="ltcount">${lt.length}</span> 則 →</button>
+           <div style="font-size:10.5px;color:var(--ink3);line-height:1.6;margin-top:4px">最新 ${esc(ltDate(LETTERS[lt[0]].d))}</div>`
+        : '<span style="color:var(--ink3)">—</span>'}</td>
     </tr>`;
   });
-  const noRef = main.articles.filter(a => !(REV['A0030057#' + a.no] || []).length);
+  const noRef = main.articles.filter(a => !(REV['A0030057#' + a.no] || []).length && !(LBYART[a.no] || []).length);
   return `<div class="crumb">工具</div>
   <div class="lawhead"><h2>母法／施行細則／子法 對照表</h2>
     <div class="lawmeta"><span>由程式自動解析各法規條文中「本法第○條」之引用關係產生</span></div></div>
-  <div class="note" style="margin:0 0 16px">此表呈現的是<b>反向引用</b>：左欄為政府採購法條文，右側兩欄列出「明文引用該條」的施行細則與子法條文。
+  <div class="note" style="margin:0 0 16px">此表呈現的是<b>反向引用</b>：左欄為政府採購法條文，中間兩欄列出「明文引用該條」的施行細則與子法條文，
+    右欄為工程會解釋函令則數（點擊可篩選該條號的全部函釋）。
     未明文引用者不會出現在此表，但仍可能相關；請併用左側分類瀏覽與全文搜尋。</div>
   <div class="card"><div class="tablewrap"><table class="t">
-    <thead><tr><th style="width:210px">政府採購法</th><th style="width:34%">施行細則</th><th>其他子法</th></tr></thead>
+    <thead><tr><th style="width:196px">政府採購法</th><th style="width:26%">施行細則</th><th>其他子法</th><th style="width:104px">工程會函釋</th></tr></thead>
     <tbody>${rows}</tbody></table></div></div>
   <div class="card" style="margin-top:14px"><h3><span class="dot"></span>未被明文引用之母法條文（${noRef.length} 條）</h3>
-    <p class="hint">這些條文在子法中未以「本法第○條」形式引用，多為直接適用之實體規定。</p>
+    <p class="hint">這些條文既未被子法以「本法第○條」引用，也沒有對應的工程會函釋，多為直接適用之實體規定。</p>
     <div style="display:flex;flex-wrap:wrap;gap:5px">
       ${noRef.map(a => `<button class="relchip" data-go="A0030057#${a.no}">${esc(a.label)}</button>`).join('')}
     </div></div>`;
@@ -563,6 +582,92 @@ function viewQuiz() {
     </div>${stat}</div>`;
 }
 
+/* ---------- 工程會解釋函令 ---------- */
+const LT = { art: null, q: '', limit: 60 };
+const LETTERS = (D.letters && D.letters.items) || [];
+const LBYART = (D.letters && D.letters.byArt) || {};
+
+function ltUrl(x) { return D.letters.base + x.i; }
+function ltDate(d) { return d ? d.replace(/-/g, '.') : ''; }
+
+function ltFilter() {
+  let list = LT.art ? (LBYART[LT.art] || []).map(k => LETTERS[k]) : LETTERS;
+  const terms = tokenize(LT.q);
+  if (terms.length) {
+    list = list.filter(x => {
+      const hay = x.s + ' ' + (x.n || '') + ' ' + (x.d || '');
+      return terms.every(t => hay.indexOf(t) >= 0);
+    });
+  }
+  return list;
+}
+function ltRow(x, terms) {
+  const arts = (x.a || []).slice(0, 6).map(a =>
+    `<button class="relchip" data-go="A0030057#${a}">§${a}</button>`).join('');
+  return `<div class="lt">
+    <div class="ltmeta"><span class="ltd">${esc(ltDate(x.d))}</span>
+      <span class="ltn">${esc(x.n || '')}</span></div>
+    <div class="lts">${terms && terms.length ? hl(x.s, terms) : esc(x.s)}</div>
+    <div class="ltfoot">${arts}
+      <a class="relchip" href="${ltUrl(x)}" target="_blank" rel="noopener">看全文 ↗</a></div>
+  </div>`;
+}
+function viewLetters() {
+  const list = ltFilter();
+  const terms = tokenize(LT.q);
+  const shown = list.slice(0, LT.limit);
+  const topArts = Object.keys(LBYART)
+    .sort((a, b) => LBYART[b].length - LBYART[a].length).slice(0, 24);
+  const main = LAWBY['A0030057'];
+  return `<div class="crumb">工具</div>
+  <div class="lawhead"><h2>工程會解釋函令</h2>
+    <div class="lawmeta">
+      <span>共 <b>${LETTERS.length}</b> 則　·　對應 <b>${Object.keys(LBYART).length}</b> 個採購法條號</span>
+      <span>擷取日期：${esc(D.letters.fetched)}</span>
+      <span class="pill b">索引・全文連回政府電子採購網</span>
+    </div></div>
+  <div class="note" style="margin:0 0 16px">此處收錄的是<b>函釋索引</b>（主旨摘要、發文日期與字號、所對應之採購法條號），
+    可在站內直接搜尋；點「看全文 ↗」回政府電子採購網解釋函令系統閱讀完整主旨與說明。
+    摘要在來源即為節錄，過長者於 100 字截斷。</div>
+  <div class="card wide" style="margin-bottom:16px">
+    <div class="searchbox" style="margin-bottom:12px">
+      <span class="ic">🔍</span>
+      <input id="ltq" type="search" autocomplete="off" spellcheck="false" value="${esc(LT.q)}"
+        placeholder="在 ${LETTERS.length} 則函釋中搜尋主旨或發文字號…" style="padding-right:14px">
+    </div>
+    <div class="scoperow" style="margin:0">
+      <span class="lbl">條號</span>
+      <button class="chip${LT.art ? '' : ' on'}" data-lt="">全部</button>
+      ${topArts.map(a => `<button class="chip${LT.art === a ? ' on' : ''}" data-lt="${a}">§${a}
+        <b style="opacity:.6">${LBYART[a].length}</b></button>`).join('')}
+    </div>
+  </div>
+  <div class="rescount">
+    ${LT.art ? `採購法<b>第 ${esc(LT.art)} 條</b>　` : ''}
+    符合 <b>${list.length}</b> 則${list.length > shown.length ? `（顯示前 ${shown.length} 則）` : ''}
+    ${LT.art && main && main.artBy[LT.art]
+      ? `　<button class="ref" data-go="A0030057#${LT.art}">前往條文原文 →</button>` : ''}
+  </div>
+  ${shown.length ? `<div class="ltlist">${shown.map(x => ltRow(x, terms)).join('')}</div>` :
+    `<div class="empty"><div class="big">🔍</div><h3>沒有符合的函釋</h3>
+      <p>換個關鍵字，或把條號改回「全部」。</p></div>`}
+  ${list.length > shown.length
+    ? `<div style="text-align:center;margin-top:16px">
+        <button class="tbtn" data-ltmore="1">再顯示 60 則（尚有 ${list.length - shown.length} 則）</button></div>` : ''}`;
+}
+
+/* 條文卡片下方的函釋摘要（僅母法） */
+function lettersForArticle(a) {
+  if (a.lid !== 'A0030057') return '';
+  const ks = LBYART[a.no];
+  if (!ks || !ks.length) return '';
+  const top = ks.slice(0, 3).map(k => LETTERS[k]);
+  return `<div class="relbar"><span class="rl">工程會函釋 ${ks.length} 則</span>
+    ${top.map(x => `<a class="relchip" href="${ltUrl(x)}" target="_blank" rel="noopener"
+       title="${esc(x.s)}">${esc(ltDate(x.d))}　${esc(x.s.slice(0, 22))}…</a>`).join('')}
+    <button class="relchip" data-lt="${a.no}" data-ltgo="1">全部 ${ks.length} 則 →</button></div>`;
+}
+
 /* ---------- 圖解流程 ---------- */
 let DG = { id: null };
 function dgFigure(d) {
@@ -654,6 +759,7 @@ function render() {
   else if (S.view === 'cmp') html = viewCmp();
   else if (S.view === 'cmp2') html = viewCompare();
   else if (S.view === 'dg') html = viewDiagrams();
+  else if (S.view === 'lt') html = viewLetters();
   else if (S.view === 'quiz') html = viewQuiz();
   else if (S.view === 'marks') html = viewMarks();
   else html = viewHome();
@@ -717,7 +823,7 @@ $('#mob').addEventListener('click', () => { $('#side').classList.toggle('open');
 $('#scrim').addEventListener('click', closeSide);
 
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-go],[data-cat],[data-law],[data-view],[data-home],[data-mark],[data-copy],[data-qa],[data-qs],[data-qm],[data-pick],[data-cmp],[data-dg],#clearMarks');
+  const t = e.target.closest('[data-go],[data-cat],[data-law],[data-view],[data-home],[data-mark],[data-copy],[data-qa],[data-qs],[data-qm],[data-pick],[data-cmp],[data-dg],[data-lt],[data-ltmore],#clearMarks');
   if (!t) return;
   if (t.dataset.go) { goto(t.dataset.go); return; }
   if (t.id === 'clearMarks') { if (confirm('確定清除全部標記？')) { marks.clear(); saveMarks(); render(); } return; }
@@ -747,9 +853,20 @@ document.addEventListener('click', e => {
     S.cat = t.dataset.cat; S.lid = null; S.view = 'cat'; render(); window.scrollTo({ top: 0 }); closeSide(); return;
   }
   if (t.dataset.home !== undefined && t.hasAttribute('data-home')) { S.q = ''; $('#q').value = ''; S.view = 'home'; S.lid = null; S.cat = null; render(); window.scrollTo({ top: 0 }); closeSide(); return; }
-  if (t.dataset.view) { S.q = ''; $('#q').value = ''; S.view = t.dataset.view; render(); window.scrollTo({ top: 0 }); closeSide(); return; }
+  if (t.dataset.view) {
+    S.q = ''; $('#q').value = '';
+    if (t.dataset.view === 'lt') { LT.art = null; LT.q = ''; LT.limit = 60; }   // 從側欄進入＝重新瀏覽全部
+    S.view = t.dataset.view; render(); window.scrollTo({ top: 0 }); closeSide(); return;
+  }
   if (t.dataset.cmp) { CMP.id = t.dataset.cmp; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   if (t.dataset.dg) { DG.id = t.dataset.dg; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  if (t.hasAttribute('data-lt')) {
+    LT.art = t.dataset.lt || null; LT.limit = 60;
+    if (t.dataset.ltq != null) LT.q = t.dataset.ltq;
+    else if (t.dataset.ltgo) LT.q = '';
+    S.q = ''; $('#q').value = ''; S.view = 'lt'; render(); window.scrollTo({ top: 0 }); return;
+  }
+  if (t.dataset.ltmore) { LT.limit += 60; render(); return; }
   if (t.dataset.qs) { QZ.scope = t.dataset.qs; buildPool(); render(); return; }
   if (t.dataset.qm) { QZ.mode = t.dataset.qm; buildPool(); render(); return; }
   if (t.dataset.pick != null && t.hasAttribute('data-pick')) {
@@ -770,6 +887,19 @@ document.addEventListener('click', e => {
     else if (act === 'goto') { const r = QZ.pool[QZ.i % QZ.pool.length]; goto(r.lid + '#' + r.no); return; }
     render(); return;
   }
+});
+
+let ltTmr = null;
+document.addEventListener('input', e => {
+  if (e.target.id !== 'ltq') return;
+  clearTimeout(ltTmr);
+  const v = e.target.value;
+  ltTmr = setTimeout(() => {
+    LT.q = v.trim(); LT.limit = 60;
+    render();
+    const el = $('#ltq');
+    if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+  }, 160);
 });
 
 document.addEventListener('keydown', e => {

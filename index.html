@@ -172,6 +172,19 @@ mark{background:var(--mark);color:var(--mark-ink);border-radius:2px;padding:0 1p
 .g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
 .grid>.card.wide{grid-column:1/-1}
 
+/* 解釋函令 */
+.ltlist{display:flex;flex-direction:column;gap:8px}
+.lt{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:12px 15px;transition:.13s}
+.lt:hover{border-color:var(--line2);box-shadow:var(--shadow)}
+.ltmeta{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:5px}
+.ltd{font:700 11.5px/1 var(--mono);color:var(--accent)}
+.ltn{font-size:11px;color:var(--ink3)}
+.lts{font-family:var(--serif);font-size:14px;line-height:1.8;color:var(--ink)}
+.ltfoot{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.ltfoot a.relchip{text-decoration:none}
+.cmptbl td .ltcount{font:700 11px/1 var(--mono)}
+
+
 /* 圖解 */
 figure.dg{margin:0}
 figure.dg .svgwrap{overflow-x:auto;background:var(--bg);border:1px solid var(--line);

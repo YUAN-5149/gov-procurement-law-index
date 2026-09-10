@@ -10,6 +10,7 @@ from content_compare import COMPARE
 from content_quiz import Q as QUIZ
 from content_diagram import DIAGRAMS
 import content_errpattern
+import content_letters
 
 OUT = r'C:\Users\TFD\notebookLM\政府採購法令彙編\data.js'
 
@@ -441,8 +442,9 @@ data = dict(
          '速記卡、概念比較、WTO GPA 導讀與選擇題為學習用整理及自製練習題，非法規原文亦非官方考古題；'
          '引用金額、期限請以最新法規及主管機關公告為準。已廢止或停止適用之法規未收錄。'
          '「政府採購錯誤行為態樣」係工程會函頒文件，取自政府電子採購網解釋函令系統之 113.12.05 附件。'
-         '各類採購契約範本、投標須知範本仍以函頒方式發布且僅提供檔案下載，未收錄。'),
-  cats=CATS, memo=MEMO, compare=COMPARE, diagrams=DIAGRAMS, laws=laws,
+         '各類採購契約範本、投標須知範本仍以函頒方式發布且僅提供檔案下載，未收錄。'
+         '工程會解釋函令為索引（主旨摘要、發文日期字號、條號對應），全文請點連結回政府電子採購網。'),
+  cats=CATS, memo=MEMO, compare=COMPARE, diagrams=DIAGRAMS, letters=content_letters.build(), laws=laws,
   quiz=[{'c': c, 'q': q, 'o': list(o), 'a': a, 'e': e, 'r': r} for c, q, o, a, e, r in QUIZ])
 
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
@@ -452,4 +454,5 @@ with open(OUT, 'w', encoding='utf-8') as f:
     f.write(';\n')
 print('written', OUT, os.path.getsize(OUT), 'bytes')
 print('laws:', len(laws), 'articles:', sum(len(l['articles']) for l in laws))
-print('memo:', len(MEMO), 'compare:', len(COMPARE), 'quiz:', len(QUIZ), 'diagrams:', len(DIAGRAMS))
+print('memo:', len(MEMO), 'compare:', len(COMPARE), 'quiz:', len(QUIZ), 'diagrams:', len(DIAGRAMS),
+      'letters:', len(data['letters']['items']))
