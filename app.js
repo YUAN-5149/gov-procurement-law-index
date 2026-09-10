@@ -207,6 +207,7 @@ function buildNav() {
         </div></div>`;
     }).join('') +
     `<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">
+      <button class="navcat" data-view="journey"><span class="ci">路</span><span class="cn">採購旅程 · 圖像記憶</span></button>
       <button class="navcat" data-view="dg"><span class="ci">圖</span><span class="cn">圖解流程</span></button>
       <button class="navcat" data-view="memo"><span class="ci">記</span><span class="cn">重點速記卡</span></button>
       <button class="navcat" data-view="cmp2"><span class="ci">比</span><span class="cn">易混淆概念比較</span></button>
@@ -239,7 +240,7 @@ function syncNav() {
 /* ================== 各視圖 ================== */
 function viewHome() {
   const stats = D.cats.map(c => ({ c, n: IDX.filter(r => r.cats.indexOf(c.id) >= 0).length }));
-  return `<div class="crumb">首頁</div>
+  return `<div class="journey-hero"><small>從理解到記憶</small><h2>讓法條在腦中，有一個位置。</h2><p>用六個場景串起採購程序，再用比較與回想把觀念記牢。</p><button class="journey-start" data-view="journey">開始六站圖像學習 →</button></div><div class="crumb">首頁</div>
   <div class="lawhead"><h2>政府採購法令彙編 · 學習索引</h2>
     <div class="lawmeta">
       <span><b>${LAWS.length}</b> 部法規</span><span><b>${IDX.length}</b> 條條文</span>
@@ -616,6 +617,31 @@ function viewCompare() {
   </div>`;
 }
 
+
+/* 採購旅程：圖像線索 → 主動回想 → 法源 */
+const JOURNEY = [
+ ['▤','需求書桌','先辨識採購','把工程、財物、勞務放進三個抽屜，再確認機關與適用範圍。','學校要購買電腦：先辨識採購標的，再判斷適用規定。','採購的三種標的是什麼？','工程、財物、勞務。分類後仍須判斷個案適用範圍。','2','g'],
+ ['⌂','招標大門','選擇進場方式','公開招標像開放大門；選擇性招標像先審入場資格；限制性招標像依法邀請。','比喻只幫助記憶。公告金額以上以公開招標為原則，例外須查法定要件。','限制性招標是否能只因方便而使用？','不能。應查核第22條等適用依據與個案要件；三種方式的定義見第18條。','18','b'],
+ ['⚖','決標天平','分清選人與選標','大門回答「誰來投標」；天平回答「用什麼原則決標」。','把招標方式與決標原則分成兩個問題，避免把公開招標直接等同最低標。','公開招標一定只能用最低標嗎？','不是。招標方式與決標原則須分別判斷；決標原則與適用條件見第52條。','52','d'],
+ ['⚒','履約工地','把承諾做出來','得標後進入履約場景：依契約執行，並區分轉包與分包。','想像得標廠商仍站在工地中央，提醒自己履約責任不因分包而消失。','得標後可以把契約轉包嗎？','第65條規定不得轉包；第67條另規定分包及得標廠商責任。應回原文比較。','65','p'],
+ ['✓','驗收關卡','逐項核對成果','拿著契約清單對照成果：履約完成後，仍要進行驗收程序。','把「做完」與「驗收合格」放成兩張不同的卡片。','成果不符契約時，可以直接當成合格嗎？','不能直接等同合格。第72條規定改善等處理及減價收受的要件，應逐項判斷。','72','p'],
+ ['⑂','爭議路口','先分辨爭議階段','招標、審標、決標爭議與履約爭議，在路口分開思考。','前段查異議、申訴；履約爭議查調解等途徑。停權另有第102條程序。','所有爭議都直接走同一條申訴程序嗎？','不是。先辨識爭議性質，再查第75、76、85條之1或第102條等規定的要件及期限。','75','r']
+];
+function journeyView(){
+ const done=LS.get('journey',{});
+ return `<section class="journey"><div class="journey-hero"><small>圖像記憶 · 六站學習路線</small><h2>跟著一件採購，走過六個場景。</h2><p>先看場景 → 遮住答案回想 → 展開解說 → 回讀法條。每站約 3 分鐘。</p><p>已練習 ${JOURNEY.filter((_,i)=>done[i]).length} / 6 站</p></div>
+ <nav class="journey-route" aria-label="六站導覽">${JOURNEY.map((x,i)=>`<a href="#station-${i}"><span>${x[0]}</span>${i+1} ${x[1]}</a>`).join('')}</nav>
+ <div class="journey-grid">${JOURNEY.map((x,i)=>`<article class="journey-station" id="station-${i}"><div class="scene" aria-hidden="true"><span>${x[0]}</span><b>0${i+1}</b></div><div class="station-body"><small>${x[1]}</small><h3>${x[2]}</h3><p>${x[3]}</p><p class="scene-example">${x[4]}</p><details><summary>先回想：${x[5]}</summary><p>${x[6]}</p></details><div class="station-actions"><button class="chip" data-go="A0030057#${x[7]}">讀第 ${x[7]} 條</button><button class="chip" data-cat="${x[8]}">圖解與相關法規</button></div><label><input type="checkbox" data-journey="${i}" ${done[i]?'checked':''}> 我已回想並核對法條</label></div></article>`).join('')}</div>
+ <div class="card"><h3>把六個場景串成一句話</h3><p>書桌辨需求，大門選招標，天平作決標，工地管履約，關卡做驗收，路口分爭議。</p><p>場景是學習比喻，並非完整法定程序；特殊採購、例外、金額與期限請回到各條文確認。</p><button class="chip" data-view="cmp2">比較易混淆概念</button> <button class="chip" data-view="quiz">進入自我測驗</button></div>
+ <div class="card"><h3>法源與收錄範圍</h3><p>沿用原站 ${LAWS.length} 部法規資料，原擷取日期：${esc(D.meta.generated)}。本次新增學習場景，並不代表所有法規已重新查核。</p><p><a href="https://www.pcc.gov.tw/content/cp.aspx?lang=1&n=2BE68E5656E06EFA" target="_blank" rel="noopener">工程會政府採購法規入口 ↗</a> · <a href="https://www.pcc.gov.tw/content/index?eid=2804&type=C" target="_blank" rel="noopener">工程會訂頒相關作業規定 ↗</a></p><p>已收錄：採購契約要項（108.08.06）、政府採購錯誤行為態樣（113.12.05）及工程會令函釋示。尚未收錄：各類採購契約範本、投標須知範本（僅提供檔案下載）。行政規則清單仍需定期比對新增、修正與停止適用項目。</p></div></section>`;
+}
+document.addEventListener('change',e=>{
+ if(!e.target.matches('[data-journey]')) return;
+ const d=LS.get('journey',{}); d[e.target.dataset.journey]=e.target.checked; LS.set('journey',d);
+ const counter=document.querySelector('.journey-hero p:last-child');
+ if(counter) counter.textContent=`已練習 ${JOURNEY.filter((_,i)=>d[i]).length} / 6 站`;
+});
+
 /* ================== 路由 / 渲染 ================== */
 function render() {
   const v = $('#view');
@@ -623,6 +649,7 @@ function render() {
   if (S.q) { S.view = 'search'; html = viewSearch(S.q); }
   else if (S.view === 'law') html = viewLaw(S.lid, S.cat);
   else if (S.view === 'cat') html = viewCat(S.cat);
+  else if (S.view === 'journey') html = journeyView();
   else if (S.view === 'memo') html = viewMemo();
   else if (S.view === 'cmp') html = viewCmp();
   else if (S.view === 'cmp2') html = viewCompare();
