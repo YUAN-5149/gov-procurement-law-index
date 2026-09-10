@@ -74,7 +74,7 @@ const LS = {
 let marks = new Set(LS.get('marks', []));
 const saveMarks = () => LS.set('marks', Array.from(marks));
 
-const S = { view: 'home', lid: null, cat: null, q: '', scope: 'all', open: {} };
+const S = { view: document.documentElement.dataset.start === 'accept' ? 'dg' : 'home', lid: null, cat: null, q: '', scope: 'all', open: {} };
 
 /* ================== 搜尋 ================== */
 const NUMONLY = /^第?\s*([一二三四五六七八九十百零〇\d]+)\s*(?:條)?(?:\s*之\s*([一二三四五六七八九十\d]+))?\s*$/;
@@ -669,7 +669,27 @@ function lettersForArticle(a) {
 }
 
 /* ---------- 圖解流程 ---------- */
-let DG = { id: null };
+
+function acceptanceEditorial(){
+ const icons={check:'<path d="m7 12 3 3 7-7"/><rect x="3" y="3" width="18" height="18" rx="4"/>',file:'<path d="M14 3H5v18h14V8zM14 3v6h5M8 13h8M8 17h6"/>',inspect:'<circle cx="10" cy="10" r="6"/><path d="m15 15 6 6M7 10h6M10 7v6"/>',award:'<circle cx="12" cy="9" r="6"/><path d="m8 15-1 7 5-3 5 3-1-7m-7-13 2 2 4-4"/>'};
+ const steps=[['01','機關 × 監造 × 廠商','7','核對竣工','收到書面通知之日起','92','check'],['02','監造單位','7','送竣工資料','工程竣工後，送機關審核','92','file'],['03','機關','30','辦理初驗','收受全部資料之日起','92','inspect'],['04','機關','20','辦理驗收','初驗合格後','93','award']];
+ return `<section class="accept-book" aria-label="驗收與付款圖解"><header class="accept-cover"><div class="accept-intro"><div class="accept-eyebrow">PROCUREMENT FIELD NOTES · 05</div><h2>從竣工，到驗收。</h2><p>先辨有無初驗，再記期限與起算點。<br>讓每一個數字，都有清楚的位置。</p><div class="accept-badges"><span>履約管理</span><span>驗收時程</span><span>圖像記憶</span></div></div><img src="assets/acceptance-editorial.png" alt="公共建築與人員持清單查驗的紙雕風格插畫"></header>
+ <div class="accept-content"><div class="accept-toolrow"><p>閱讀順序　<span aria-hidden="true">A → B → C</span>　先比較程序，再看付款</p><button class="recall-toggle" type="button" aria-pressed="false">遮住數字，練習回想</button></div>
+ <div class="route-heading"><span class="route-letter">A</span><div><h3>有初驗程序</h3><p>四個關鍵動作，各有起算點</p></div><span class="route-line"></span><span class="route-tag">INSPECTION ROUTE</span></div>
+ <p class="accept-start">起點｜廠商於工程預定竣工日前或竣工當日，書面通知監造單位及機關。</p>
+ <ol class="accept-steps">${steps.map(x=>`<li class="accept-step"><div class="step-top"><span>STEP ${x[0]}</span><span class="step-icon" aria-hidden="true"><svg viewBox="0 0 24 24">${icons[x[6]]}</svg></span></div><div class="accept-days"><strong class="quiz-number">${x[2]}</strong><span>日內</span></div><h4>${x[3]}</h4><p>${x[1]}<br>${x[4]}</p><button class="accept-ref" data-go="A0030058#${x[5]}">施行細則 §${x[5]} ↗</button></li>`).join('')}</ol>
+ <p class="accept-note">這是步驟導覽，不是天數相加：第二個 7 日從「竣工後」起算，30 日初驗則從「收受全部資料」起算。細則第 92、93 條另有契約約定規定，請點法源核對。</p>
+ <div class="route-heading"><span class="route-letter" style="background:#f5ecd9;color:#947443">B</span><div><h3>無初驗程序</h3><p>不經初驗，直接進入驗收</p></div><span class="route-line"></span></div>
+ <div class="direct-route"><div class="direct-copy"><h4>接獲通知備驗，或可得驗收程序完成後</h4><p>除契約另有規定外　·　<button class="accept-ref" data-go="A0030058#94">施行細則 §94 ↗</button></p></div><div class="accept-days"><strong class="quiz-number">30</strong><span>日內</span></div><span class="direct-arrow" aria-hidden="true">→</span><span class="direct-finish">辦理驗收</span></div>
+ <section class="pay-section"><div class="route-heading"><span class="route-letter" style="background:#f8eae2;color:#a56851">C</span><div><h3>付款，另外記。</h3><p>先區分估驗／分階段付款與驗收付款</p></div><span class="route-line"></span><button class="accept-ref" data-go="A0030057#73-1">採購法 §73-1 ↗</button></div>
+ <div class="pay-grid"><div class="pay-card"><h4>估驗／分階段付款</h4><div class="pay-flow"><div><strong class="quiz-number">15</strong><span> 工作日審核</span></div><span>→</span><div><strong class="quiz-number">15</strong><span> 工作日付款</span></div></div><p>提出估驗或階段完成證明後審核；接到請款單據後付款。兩段各有起算點。</p></div><div class="pay-card"><h4>驗收付款</h4><div class="pay-flow"><strong class="quiz-number">15</strong><span> 工作日付款</span></div><p>驗收合格後填具結算驗收證明文件；接到廠商請款單據後起算。</p></div></div>
+ <div class="pay-note"><b>補助款例外</b><span>向上級機關申請核撥補助款者，付款期限為 <strong class="quiz-number">30</strong> 工作日。除契約另有約定外；工作日不含例假日、特定假日及退請補正日數。</span></div></section>
+ <div class="memory-ribbon"><span>記憶口訣 / RECALL</span><p>核對七、送件七；初驗三十、合格後二十。<br>無初驗三十；付款分軌，記得看單據。</p></div>
+ </div></section>`;
+}
+document.addEventListener('click',e=>{const b=e.target.closest('.recall-toggle');if(!b)return;const on=b.closest('.accept-book').classList.toggle('is-recalling');b.setAttribute('aria-pressed',String(on));b.textContent=on?'顯示數字，核對答案':'遮住數字，練習回想';});
+
+let DG = { id: "accept" };
 function dgFigure(d) {
   return `<figure class="dg">
     <div class="hint-scroll">← 左右滑動可看完整流程圖 →</div>
@@ -677,6 +697,7 @@ function dgFigure(d) {
     <figcaption>${esc(d.cap)}</figcaption></figure>`;
 }
 function dgCard(d, withTitle) {
+  if(d.id === "accept") return acceptanceEditorial();
   const cat = D.cats.find(c => c.id === d.cat);
   return `<div class="dgcard">
     ${withTitle ? `<h3><span class="dot"></span>${esc(d.t)}
