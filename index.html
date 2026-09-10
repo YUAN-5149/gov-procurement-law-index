@@ -300,6 +300,16 @@ table.t td.k{font-weight:700;color:var(--ink);white-space:nowrap}
   .app{display:block}
   .art{break-inside:avoid;border:none;border-bottom:1px solid #ccc;border-radius:0;box-shadow:none}
 }
+
+.journey-hero{background:linear-gradient(125deg,#133e43,#205f62);color:#fff;padding:32px;border-radius:18px;margin:0 0 24px;box-shadow:var(--shadow)}
+.journey-hero small{color:#c5e4dc;letter-spacing:.16em}.journey-hero h2{font-size:clamp(24px,3vw,36px);line-height:1.5;margin:12px 0}.journey-hero p{color:#e1eeee}
+.journey-start{background:#f4d598;color:#243c3c;border-radius:8px;padding:12px 20px;font-weight:700}
+.journey-route{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:24px 0}.journey-route a{text-align:center;text-decoration:none;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel)}.journey-route span{display:block;font-size:28px;color:var(--blue)}
+.journey-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin-bottom:24px}.journey-station{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--panel);scroll-margin-top:100px}.scene{display:flex;align-items:center;justify-content:space-between;background:var(--blue-soft);color:var(--blue);padding:20px 26px}.scene span{font-size:54px}.scene b{font:700 42px var(--mono);opacity:.45}.station-body{padding:24px}.station-body h3{font-size:24px;margin:4px 0 16px}.station-body small{color:var(--ink3)}.scene-example{padding:12px;border-left:3px solid var(--gold);background:var(--gold-soft)}.station-body details{border-top:1px solid var(--line);padding:14px 0}.station-body summary{cursor:pointer;font-weight:700}.station-actions{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.station-body label{font-size:13px;cursor:pointer}.station-body input{accent-color:var(--blue)}
+.journey button:focus-visible,.journey a:focus-visible,.journey summary:focus-visible,.journey-start:focus-visible{outline:3px solid var(--gold);outline-offset:4px}
+@media(max-width:760px){.journey-grid{grid-template-columns:1fr}.journey-route{grid-template-columns:repeat(3,1fr)}.journey-hero{padding:24px}.station-body{padding:18px}}
+@media print{.journey-hero{background:white;color:black}.journey-hero p,.journey-hero small{color:black}.journey-grid{display:block}.journey-station{break-inside:avoid;margin:16px 0}.station-actions,.station-body label{display:none}}
+
 </style>
 </head>
 <body>
