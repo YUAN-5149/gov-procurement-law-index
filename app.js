@@ -40,9 +40,11 @@ LAWS.forEach(l => l.articles.forEach(a => {
 }));
 
 /* 條文互引：抓出「本法第○條」「第○條之○」等 → 建立正向 / 反向索引 */
-const REFRE = /(本法|政府採購法|採購法|本細則|本辦法|本準則|本規則|本標準|本要點)?第\s*([一二三四五六七八九十百零〇\d]+)\s*條(?:\s*之\s*([一二三四五六七八九十\d]+))?/g;
+const REFRE = /(政府採購法施行細則|本法施行細則|施行細則|政府採購法|採購法|本法|本細則|本辦法|本準則|本規則|本標準|本要點|本要項)?第\s*([一二三四五六七八九十百零〇\d]+)\s*條(?:\s*之\s*([一二三四五六七八九十\d]+))?/g;
 const REV = {};        // 'A0030057#50' -> [{lid,no,label,lt}]
+const DETAIL_PREFIX = ['政府採購法施行細則', '本法施行細則', '施行細則'];
 function refTarget(prefix, selfLid) {
+  if (DETAIL_PREFIX.indexOf(prefix) >= 0) return 'A0030058';
   if (prefix === '本法' || prefix === '政府採購法' || prefix === '採購法') return 'A0030057';
   if (prefix) return selfLid;              // 本細則/本辦法…
   return selfLid;                          // 無前綴 → 同法
@@ -285,9 +287,11 @@ function viewHome() {
     <div class="card"><h3><span class="dot"></span>條文互相連結</h3>
       <p class="hint">條文中出現的「本法第○條」「第○條」皆為<span class="xref">可點連結</span>，直接跳到該條。</p>
       <p class="hint">每條下方的「相關條文」列出<b>反向引用</b>——也就是有哪些細則、子法條文引用了這一條，這是把母法與子法串起來記憶的關鍵。</p>
-      <p class="hint" style="margin-top:12px"><b>收錄範圍</b>：政府採購法、施行細則、41 部授權子法，
-        以及工程會訂頒之 <b>27 部作業規定／要點／須知</b>（行政規則），依採購流程分入八大分類，
-        法規名稱旁以「工程會訂頒」標示。</p>
+      <p class="hint" style="margin-top:12px"><b>收錄範圍</b>：政府採購法、施行細則、
+        ${LAWS.filter(l => l.kind === '子法').length} 部授權子法，以及工程會訂頒之
+        <b>${LAWS.filter(l => ['行政規則', '令函釋示', '函頒'].indexOf(l.kind) >= 0).length} 份</b>
+        作業規定、要點、須知、令函釋示與《政府採購錯誤行為態樣》，
+        依採購流程分入八大分類，法規名稱旁以「工程會訂頒」標示。</p>
       <div class="note">${esc(D.meta.note)}</div>
     </div>
   </div>`;

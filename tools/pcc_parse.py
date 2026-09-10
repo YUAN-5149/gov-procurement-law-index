@@ -33,11 +33,24 @@ def parse(fid):
     date = f'民國{m.group(1)}年{m.group(2).zfill(2)}月{m.group(3).zfill(2)}日' if m else date
 
     i = h.find('law-reg-content')
-    body = h[i:] if i > 0 else h
+    if i > 0:                       # 跳過該開始標籤本身，否則屬性字串會混進內文
+        j = h.find('>', i)
+        body = h[j + 1:] if j > 0 else h[i:]
+    else:
+        body = h
     j = body.find('</table>')
     body = body[:j] if j > 0 else body
 
     arts = []
+    if '<tr>' not in body:
+        # 令／函格式：內容直接放在 div，非表格
+        txt = clean(body)
+        txt = re.sub(r'[ 	]+', ' ', txt)
+        lines = [l.strip() for l in txt.split(chr(10))]
+        lines = [l for l in lines if l]
+        if lines:
+            arts.append({'no': '1', 'label': '全文', 'lines': lines})
+        return {'id': fid, 'title': title, 'date': date, 'articles': arts}
     for tr in re.findall(r'<tr>(.*?)</tr>', body, re.S):
         tds = re.findall(r'<td[^>]*>(.*?)</td>', tr, re.S)
         if len(tds) < 2:
@@ -62,6 +75,9 @@ def parse(fid):
             m3 = re.match(r'^\s*([壹貳參肆伍陸柒捌玖拾])、', lines[0])
             if m2:
                 no = str(cn2n(m2.group(1))); label = '第' + m2.group(1) + '點'
+                lines = lines[:]                       # 內文開頭與 label 重複，去掉
+                lines[0] = re.sub(r'^\s*[一二三四五六七八九十]{1,3}、\s*', '', lines[0]).strip()
+                lines = [l for l in lines if l]
             elif m3:
                 no = str(len(arts) + 1); label = m3.group(1) + '、'
             else:

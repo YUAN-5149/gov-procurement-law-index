@@ -9,6 +9,7 @@ PCC = importlib.util.module_from_spec(spec2); spec2.loader.exec_module(PCC)
 from content_compare import COMPARE
 from content_quiz import Q as QUIZ
 from content_diagram import DIAGRAMS
+import content_errpattern
 
 OUT = r'C:\Users\TFD\notebookLM\政府採購法令彙編\data.js'
 
@@ -82,6 +83,14 @@ PCCCAT = {
  'FL026637':'p','FL037176':'p','FL003712':'p','FL024579':'p',
  'FL029468':'z','FL039842':'z','FL039840':'z','FL041711':'z',
 }
+# 工程會令／函頒之解釋性規定（lawweb GL 編號）
+PCCCAT.update({
+ 'GL000093':'g','GL000007':'g',
+ 'GL000004':'b','GL000064':'b','GL000079':'b','GL000096':'b','GL000089':'b','GL000050':'b',
+ 'GL000002':'d','GL000030':'d','GL000095':'d','GL000097':'d',
+ 'GL000077':'p','GL000045':'p','GL000091':'p','GL000026':'p','GL000023':'p','GL000015':'p',
+ 'GL000025':'z',
+})
 PCCSHORT = {
  'FL029347':'公開閱覽要點','FL000661':'§26執行注意事項','FL003755':'水電建築合併招標原則',
  'FL039308':'統包作業須知','FL000719':'廠商家數一覽表','FL005555':'特殊軍事採購辦法',
@@ -93,6 +102,13 @@ PCCSHORT = {
  'FL037176':'查核缺失逾期處理規定','FL003712':'公共工程趕工實施要點','FL024579':'鋼筋價格變動處理原則',
  'FL029468':'稽核小組績效考核要點','FL039842':'巨額採購效益分析規定','FL039840':'重大採購效益評估要點',
  'FL041711':'政府採購諮詢小組要點',
+ 'GL000077':'採購契約要項','GL000093':'查核公告小額金額令','GL000007':'上級機關權責一覽表',
+ 'GL000064':'§31Ⅱ⑦影響採購公正認定','GL000030':'重大異常關聯認定','GL000095':'§58低於底價八成程序',
+ 'GL000097':'不得列為不合格標之情形','GL000004':'§22Ⅰ④原有採購範圍','GL000002':'§61特殊情形認定',
+ 'GL000079':'資格標準§4Ⅰ⑥處理情形','GL000096':'專案管理屬特殊採購','GL000089':'國安採購§3Ⅰ④情形',
+ 'GL000050':'押標金保證金格式','GL000045':'預付款還款保證格式','GL000025':'獎勵優良採購人員要點',
+ 'GL000091':'施工品質管理制度','GL000026':'開工要件注意事項','GL000023':'履約情形計分要點',
+ 'GL000015':'新材料新技術試辦要點',
 }
 
 def chapter_short(ch):
@@ -130,7 +146,9 @@ def build_pcc(fid):
         if a.get('mono'): rec['mono'] = True
         arts.append(rec)
     return {'id': fid, 'title': d['title'], 'short': PCCSHORT.get(fid, d['title']),
-            'date': d['date'], 'kind': ('子法' if fid == 'FL005555' else '行政規則'),
+            'date': d['date'],
+            'kind': ('子法' if fid == 'FL005555' else
+                     '令函釋示' if fid.startswith('GL') and len(arts) <= 2 else '行政規則'),
             'multi': False, 'url': f'https://lawweb.pcc.gov.tw/LawContent.aspx?id={fid}',
             'articles': arts}
 
@@ -140,6 +158,7 @@ for pc in sorted(SUBS, key=lambda x: (order.index(SUBCAT[x]), SHORT.get(x, x))):
     laws.append(build(pc, '子法', cat=SUBCAT[pc]))
 for fid in sorted(PCCCAT, key=lambda x: (order.index(PCCCAT[x]), PCCSHORT.get(x, x))):
     laws.append(build_pcc(fid))
+laws.append(content_errpattern.build())
 
 # ---------------- WTO GPA 分類導讀 ----------------
 GPA_INTRO = """
@@ -421,7 +440,8 @@ data = dict(
          '「行政院公共工程委員會主管法規共用系統」（lawweb.pcc.gov.tw），均為現行有效版本。'
          '速記卡、概念比較、WTO GPA 導讀與選擇題為學習用整理及自製練習題，非法規原文亦非官方考古題；'
          '引用金額、期限請以最新法規及主管機關公告為準。已廢止或停止適用之法規未收錄。'
-         '「採購契約要項」及各類採購契約範本係以函頒方式發布，不在上述兩個法規資料庫中，故未收錄。'),
+         '「政府採購錯誤行為態樣」係工程會函頒文件，取自政府電子採購網解釋函令系統之 113.12.05 附件。'
+         '各類採購契約範本、投標須知範本仍以函頒方式發布且僅提供檔案下載，未收錄。'),
   cats=CATS, memo=MEMO, compare=COMPARE, diagrams=DIAGRAMS, laws=laws,
   quiz=[{'c': c, 'q': q, 'o': list(o), 'a': a, 'e': e, 'r': r} for c, q, o, a, e, r in QUIZ])
 
