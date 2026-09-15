@@ -8,6 +8,7 @@ spec2 = importlib.util.spec_from_file_location('pcc_parse', 'pcc_parse.py')
 PCC = importlib.util.module_from_spec(spec2); spec2.loader.exec_module(PCC)
 from content_compare import COMPARE
 from content_quiz import Q as QUIZ
+from content_quiz2 import Q2 as QUIZ2
 from content_diagram import DIAGRAMS
 import content_errpattern
 import content_letters
@@ -445,7 +446,7 @@ data = dict(
          '各類採購契約範本、投標須知範本仍以函頒方式發布且僅提供檔案下載，未收錄。'
          '工程會解釋函令為索引（主旨摘要、發文日期字號、條號對應），全文請點連結回政府電子採購網。'),
   cats=CATS, memo=MEMO, compare=COMPARE, diagrams=DIAGRAMS, letters=content_letters.build(), laws=laws,
-  quiz=[{'c': c, 'q': q, 'o': list(o), 'a': a, 'e': e, 'r': r} for c, q, o, a, e, r in QUIZ])
+  quiz=[{'c': c, 'q': q, 'o': list(o), 'a': a, 'e': e, 'r': r} for c, q, o, a, e, r in (QUIZ + QUIZ2)])
 
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 with open(OUT, 'w', encoding='utf-8') as f:
@@ -453,6 +454,22 @@ with open(OUT, 'w', encoding='utf-8') as f:
     json.dump(data, f, ensure_ascii=False, separators=(',', ':'))
     f.write(';\n')
 print('written', OUT, os.path.getsize(OUT), 'bytes')
+# 依內容雜湊更新 index.html 的 ?v=，避免使用者拿到舊的 data.js / app.js
+import hashlib, re as _re
+PROJ = os.path.dirname(OUT)
+idx = os.path.join(PROJ, 'index.html')
+if os.path.exists(idx):
+    html = open(idx, encoding='utf-8').read()
+    for fn in ('data.js', 'app.js'):
+        fp = os.path.join(PROJ, fn)
+        if not os.path.exists(fp):
+            continue
+        h = hashlib.md5(open(fp, 'rb').read()).hexdigest()[:8]
+        html = _re.sub(r'(<script src="' + fn + r')(\?v=[0-9a-f]+)?(")',
+                       lambda m: m.group(1) + '?v=' + h + m.group(3), html)
+    open(idx, 'w', encoding='utf-8').write(html)
+    print('index.html 已更新快取版號')
+
 print('laws:', len(laws), 'articles:', sum(len(l['articles']) for l in laws))
-print('memo:', len(MEMO), 'compare:', len(COMPARE), 'quiz:', len(QUIZ), 'diagrams:', len(DIAGRAMS),
+print('memo:', len(MEMO), 'compare:', len(COMPARE), 'quiz:', len(QUIZ) + len(QUIZ2), 'diagrams:', len(DIAGRAMS),
       'letters:', len(data['letters']['items']))

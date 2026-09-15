@@ -476,6 +476,58 @@ function viewMemo() {
    <div class="grid g2">${cards}</div>`;
 }
 
+/* ---------- 練習紀錄：錯題本 + Leitner 間隔重複 ---------- */
+/* QS[key] = {n:作答次數, w:答錯次數, box:1~5, due:下次到期(ms), last:上次作答(ms)}
+   key 為題目在 D.quiz 中的索引；box 越高代表越熟，間隔越長。 */
+const SRS_DAY = 86400000;
+const SRS_GAP = [0, 1, 3, 7, 21];          // box 1~5 對應的間隔天數
+let QS = LS.get('qstat', {});
+const saveQS = () => LS.set('qstat', QS);
+
+function srsGet(k) { return QS[k] || null; }
+function srsDue(k, now) {
+  const s = QS[k];
+  if (!s) return true;                      // 沒做過＝該做
+  return (s.due || 0) <= (now || Date.now());
+}
+function srsRecord(k, ok) {
+  const now = Date.now();
+  const s = QS[k] || { n: 0, w: 0, box: 1 };
+  s.n++; s.last = now;
+  if (ok) s.box = Math.min(5, (s.box || 1) + 1);
+  else { s.w++; s.box = 1; }
+  s.due = now + SRS_GAP[s.box - 1] * SRS_DAY;
+  QS[k] = s; saveQS();
+}
+function srsStats() {
+  const now = Date.now();
+  let done = 0, wrong = 0, due = 0, mastered = 0;
+  for (let k = 0; k < D.quiz.length; k++) {
+    const s = QS[k];
+    if (!s) { due++; continue; }
+    done++;
+    if (s.w > 0 && s.box < 5) wrong++;
+    if (s.box >= 5) mastered++;
+    if (srsDue(k, now)) due++;
+  }
+  return { total: D.quiz.length, done, wrong, due, mastered, untouched: D.quiz.length - done };
+}
+function srsBar() {
+  const s = srsStats();
+  const pct = Math.round(s.mastered / s.total * 100);
+  return `<div class="srs">
+    <div class="srsrow">
+      <span><b>${s.done}</b> / ${s.total} 已練習</span>
+      <span class="ok">熟練 <b>${s.mastered}</b></span>
+      <span class="ng">錯題 <b>${s.wrong}</b></span>
+      <span>待複習 <b>${s.due}</b></span>
+      <button class="ref" data-qa="clearstat">清除紀錄</button>
+    </div>
+    <div class="bar"><i style="width:${pct}%"></i></div>
+    <div class="srshint">答對一次往後排（1 → 3 → 7 → 21 天），答錯歸零重來。紀錄存在這個瀏覽器。</div>
+  </div>`;
+}
+
 /* ---------- 自我測驗（選擇題 + 條號翻牌） ---------- */
 let QZ = { mode: 'mcq', scope: 'all', pool: [], i: 0, shown: false, picked: null, right: 0, wrong: 0 };
 
@@ -486,11 +538,22 @@ function quizScopes() {
 function buildPool() {
   QZ.i = 0; QZ.shown = false; QZ.picked = null; QZ.right = 0; QZ.wrong = 0;
   let p;
-  if (QZ.mode === 'mcq') {
-    p = D.quiz.slice();
+  if (QZ.mode === 'mcq' || QZ.mode === 'wrong' || QZ.mode === 'due') {
+    p = D.quiz.map((q, i) => Object.assign({ _k: i }, q));
+    if (QZ.mode === 'wrong') {
+      p = p.filter(x => { const st = srsGet(x._k); return st && st.w > 0 && st.box < 5; });
+    } else if (QZ.mode === 'due') {
+      const now = Date.now();
+      p = p.filter(x => srsDue(x._k, now));
+    }
     if (QZ.scope === 'main' || QZ.scope === 'md') p = p.filter(x => x.r.indexOf('A003005') === 0);
     else if (QZ.scope === 'mark') p = p.filter(x => marks.has(x.r));
     else if (QZ.scope.indexOf('c:') === 0) p = p.filter(x => x.c === QZ.scope.slice(2));
+    if (QZ.mode === 'due') {
+      // 逾期越久越先出，沒做過的排在最後
+      p.sort((a, b) => ((srsGet(a._k) || {}).due || Infinity) - ((srsGet(b._k) || {}).due || Infinity));
+      QZ.pool = p; return;
+    }
   } else {
     p = IDX.filter(r => r.text.length > 25);
     if (QZ.scope === 'main') p = p.filter(r => r.lid === 'A0030057');
@@ -506,9 +569,12 @@ function viewQuiz() {
   const head = `<div class="crumb">工具</div>
    <div class="lawhead"><h2>自我測驗</h2>
      <div class="lawmeta"><span>${D.quiz.length} 題選擇題（自製練習題，非官方考古題）　·　${IDX.length} 條條號翻牌卡</span></div></div>
+   ${srsBar()}
    <div class="scoperow" style="margin:0 0 14px">
      <span class="lbl">題型</span>
      <button class="chip${QZ.mode === 'mcq' ? ' on' : ''}" data-qm="mcq">選擇題</button>
+     <button class="chip${QZ.mode === 'due' ? ' on' : ''}" data-qm="due">排程複習 <b style="opacity:.6">${srsStats().due}</b></button>
+     <button class="chip${QZ.mode === 'wrong' ? ' on' : ''}" data-qm="wrong">錯題本 <b style="opacity:.6">${srsStats().wrong}</b></button>
      <button class="chip${QZ.mode === 'no' ? ' on' : ''}" data-qm="no">看條文猜條號</button>
      <button class="chip${QZ.mode === 'tx' ? ' on' : ''}" data-qm="tx">看條號背條文</button>
      <span style="flex:1"></span>
@@ -518,8 +584,11 @@ function viewQuiz() {
      <span class="lbl">範圍</span>
      ${quizScopes().map(([v, n]) => `<button class="chip${QZ.scope === v ? ' on' : ''}" data-qs="${v}">${n}</button>`).join('')}
    </div>`;
-  if (!QZ.pool.length) return head + `<div class="empty"><div class="big">?</div><h3>此範圍沒有題目</h3>
-    <p>換一個範圍，或先在條文上點 <code>☆</code> 標記重點。</p></div>`;
+  if (!QZ.pool.length) return head + `<div class="empty"><div class="big">✓</div>
+    <h3>${QZ.mode === 'wrong' ? '錯題本是空的' : QZ.mode === 'due' ? '目前沒有到期的複習' : '此範圍沒有題目'}</h3>
+    <p>${QZ.mode === 'wrong' ? '答錯的題目會自動收進這裡，答對到熟練後移除。'
+        : QZ.mode === 'due' ? '所有練習過的題目都還在間隔期內，晚點再回來，或切到「選擇題」繼續練新題。'
+        : '換一個範圍，或先在條文上點 <code>☆</code> 標記重點。'}</p></div>`;
 
   const n = QZ.pool.length, cur = QZ.i % n;
   const done = QZ.right + QZ.wrong;
@@ -528,7 +597,7 @@ function viewQuiz() {
       <span class="ok">✓ <b>${QZ.right}</b></span><span class="ng">✗ <b>${QZ.wrong}</b></span>
       ${done ? `<span>正確率 <b>${Math.round(QZ.right / done * 100)}%</b></span>` : ''}</div>`;
 
-  if (QZ.mode === 'mcq') {
+  if (QZ.mode === 'mcq' || QZ.mode === 'wrong' || QZ.mode === 'due') {
     const q = QZ.pool[cur];
     const cat = D.cats.find(c => c.id === q.c);
     const L = ['A', 'B', 'C', 'D'];
@@ -894,11 +963,17 @@ document.addEventListener('click', e => {
     if (QZ.picked != null) return;
     QZ.picked = +t.dataset.pick;
     const q = QZ.pool[QZ.i % QZ.pool.length];
-    if (QZ.picked === q.a) QZ.right++; else QZ.wrong++;
+    const ok = QZ.picked === q.a;
+    if (ok) QZ.right++; else QZ.wrong++;
+    if (q._k != null) srsRecord(q._k, ok);
     render(); return;
   }
   if (t.dataset.qa) {
     const act = t.dataset.qa;
+    if (act === 'clearstat') {
+      if (confirm('確定清除全部練習紀錄（含錯題本與複習排程）？')) { QS = {}; saveQS(); buildPool(); render(); }
+      return;
+    }
     if (act === 'reset') { buildPool(); }
     else if (act === 'show') QZ.shown = true;
     else if (act === 'next') { QZ.i++; QZ.picked = null; QZ.shown = false; }

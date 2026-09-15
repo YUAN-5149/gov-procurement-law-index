@@ -173,6 +173,18 @@ mark{background:var(--mark);color:var(--mark-ink);border-radius:2px;padding:0 1p
 .g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
 .grid>.card.wide{grid-column:1/-1}
 
+/* 練習紀錄條 */
+.srs{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:13px 16px;margin-bottom:16px}
+.srsrow{display:flex;gap:16px;flex-wrap:wrap;align-items:baseline;font-size:12.5px;color:var(--ink3)}
+.srsrow b{font-size:15px;color:var(--ink);font-family:var(--mono)}
+.srsrow .ok b{color:#2f7d52}
+.srsrow .ng b{color:var(--accent)}
+.srsrow .ref{margin-left:auto}
+.srshint{font-size:11px;color:var(--ink3);margin-top:8px;line-height:1.7}
+.srs .bar{margin-top:10px}
+
+
 /* 解釋函令 */
 .ltlist{display:flex;flex-direction:column;gap:8px}
 .lt{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:12px 15px;transition:.13s}
@@ -371,7 +383,7 @@ table.t td.k{font-weight:700;color:var(--ink);white-space:nowrap}
   <button class="fab" id="fabPrint" title="列印本頁">⎙</button>
 </div>
 
-<script src="data.js"></script>
-<script src="app.js"></script>
+<script src="data.js?v=de1c19b1"></script>
+<script src="app.js?v=7b842ce6"></script>
 </body>
 </html>
