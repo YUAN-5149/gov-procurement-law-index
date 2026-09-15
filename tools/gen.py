@@ -12,6 +12,7 @@ from content_quiz2 import Q2 as QUIZ2
 from content_diagram import DIAGRAMS
 import content_errpattern
 import content_letters
+import content_errpattern2
 
 OUT = r'C:\Users\TFD\notebookLM\政府採購法令彙編\data.js'
 
@@ -161,6 +162,7 @@ for pc in sorted(SUBS, key=lambda x: (order.index(SUBCAT[x]), SHORT.get(x, x))):
 for fid in sorted(PCCCAT, key=lambda x: (order.index(PCCCAT[x]), PCCSHORT.get(x, x))):
     laws.append(build_pcc(fid))
 laws.append(content_errpattern.build())
+laws.extend(content_errpattern2.build())
 
 # ---------------- WTO GPA 分類導讀 ----------------
 GPA_INTRO = """
@@ -444,7 +446,9 @@ data = dict(
          '引用金額、期限請以最新法規及主管機關公告為準。已廢止或停止適用之法規未收錄。'
          '「政府採購錯誤行為態樣」係工程會函頒文件，取自政府電子採購網解釋函令系統之 113.12.05 附件。'
          '各類採購契約範本、投標須知範本仍以函頒方式發布且僅提供檔案下載，未收錄。'
-         '工程會解釋函令為索引（主旨摘要、發文日期字號、條號對應），全文請點連結回政府電子採購網。'),
+         '工程會解釋函令為索引（主旨摘要、發文日期字號、條號對應），全文請點連結回政府電子採購網。'
+         '其他各類型錯誤行為態樣僅收錄具文字層之函附件；§22各款執行錯誤態樣、評分及格最低標、'
+         '共同供應契約缺失態樣之附件為掃描影像，需 OCR 始能解析，尚未收錄。'),
   cats=CATS, memo=MEMO, compare=COMPARE, diagrams=DIAGRAMS, letters=content_letters.build(), laws=laws,
   quiz=[{'c': c, 'q': q, 'o': list(o), 'a': a, 'e': e, 'r': r} for c, q, o, a, e, r in (QUIZ + QUIZ2)])
 
