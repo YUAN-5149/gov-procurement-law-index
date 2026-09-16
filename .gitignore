@@ -9,3 +9,10 @@ Desktop.ini
 .DS_Store
 .vscode/
 .idea/
+
+# Claude Code 本機設定
+.claude/
+
+# Python
+__pycache__/
+*.pyc

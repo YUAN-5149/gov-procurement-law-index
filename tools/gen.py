@@ -9,12 +9,15 @@ PCC = importlib.util.module_from_spec(spec2); spec2.loader.exec_module(PCC)
 from content_compare import COMPARE
 from content_quiz import Q as QUIZ
 from content_quiz2 import Q2 as QUIZ2
+from content_quiz3 import Q3 as QUIZ3
 from content_diagram import DIAGRAMS
 import content_errpattern
 import content_letters
 import content_errpattern2
 
-OUT = r'C:\Users\TFD\notebookLM\政府採購法令彙編\data.js'
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT = os.environ.get('GPA_OUT') or os.path.join(ROOT, 'data.js')
+LETTERS_OUT = os.path.join(os.path.dirname(OUT), 'letters.js')
 
 # ---------------- 分類 ----------------
 CATS = [
@@ -450,9 +453,19 @@ data = dict(
          '其他各類型錯誤行為態樣僅收錄具文字層之函附件；§22各款執行錯誤態樣、評分及格最低標、'
          '共同供應契約缺失態樣之附件為掃描影像，需 OCR 始能解析，尚未收錄。'),
   cats=CATS, memo=MEMO, compare=COMPARE, diagrams=DIAGRAMS, letters=content_letters.build(), laws=laws,
-  quiz=[{'c': c, 'q': q, 'o': list(o), 'a': a, 'e': e, 'r': r} for c, q, o, a, e, r in (QUIZ + QUIZ2)])
+  quiz=[{'c': c, 'q': q, 'o': list(o), 'a': a, 'e': e, 'r': r} for c, q, o, a, e, r in (QUIZ + QUIZ2 + QUIZ3)])
 
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
+
+# 函釋索引另存 letters.js，由 app.js 在首屏畫完後才背景載入（data.js 因此小約 43%）
+_letters_items = data['letters'].pop('items')
+data['letters']['count'] = len(_letters_items)
+with open(LETTERS_OUT, 'w', encoding='utf-8') as f:
+    f.write('window.LAW_LETTERS = ')
+    json.dump(_letters_items, f, ensure_ascii=False, separators=(',', ':'))
+    f.write(';\n')
+print('written', LETTERS_OUT, os.path.getsize(LETTERS_OUT), 'bytes')
+
 with open(OUT, 'w', encoding='utf-8') as f:
     f.write('window.LAW = ')
     json.dump(data, f, ensure_ascii=False, separators=(',', ':'))
@@ -475,5 +488,5 @@ if os.path.exists(idx):
     print('index.html 已更新快取版號')
 
 print('laws:', len(laws), 'articles:', sum(len(l['articles']) for l in laws))
-print('memo:', len(MEMO), 'compare:', len(COMPARE), 'quiz:', len(QUIZ) + len(QUIZ2), 'diagrams:', len(DIAGRAMS),
-      'letters:', len(data['letters']['items']))
+print('memo:', len(MEMO), 'compare:', len(COMPARE), 'quiz:', len(QUIZ) + len(QUIZ2) + len(QUIZ3), 'diagrams:', len(DIAGRAMS),
+      'letters:', data['letters']['count'])
