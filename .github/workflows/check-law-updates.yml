@@ -1,0 +1,93 @@
+name: 每月檢查法規是否修正
+
+# 每月 1 日 09:00（台北時間）比對站上收錄的法規版本與來源網站現行版本。
+# 只讀取公開法規頁面、不修改任何檔案；發現有修正就開一張 issue 提醒重新擷取。
+on:
+  schedule:
+    - cron: '0 1 1 * *'      # UTC 01:00 = 台北 09:00
+  workflow_dispatch:          # 也可以在 Actions 頁面手動觸發
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 比對法規版本
+        id: check
+        continue-on-error: true
+        run: |
+          python tools/check_updates.py --json result.json --sleep 1.2 | tee report.txt
+
+      - name: 整理報告
+        id: report
+        run: |
+          python - <<'PY'
+          import json, os
+          d = json.load(open('result.json', encoding='utf-8'))
+          changed = d.get('changed', [])
+          lines = []
+          if changed:
+              lines.append('下列法規在來源網站的版本已比站上收錄的新，需要重新擷取：\n')
+              lines.append('| 法規 | 站上版本 | 來源現行版本 | 來源 |')
+              lines.append('|---|---|---|---|')
+              for c in changed:
+                  lines.append('| %s | %s | %s | [開啟](%s) |' % (c['title'], c['have'], c['now'], c['url']))
+              lines.append('')
+              lines.append('更新方式：把來源頁面另存為 `raw_<代碼>.html`（工程會法規為 `pcc_<代碼>.html`），')
+              lines.append('再執行 `python tools/gen.py` 重新產生 `data.js` 與 `letters.js`，')
+              lines.append('最後執行 `python tools/bump_version.py` 更新快取版號。')
+          unknown = d.get('unknown', [])
+          if unknown:
+              lines.append('')
+              lines.append('<details><summary>無法自動確認的 %d 部（多為函頒文件或讀取失敗）</summary>\n' % len(unknown))
+              for u in unknown:
+                  lines.append('- %s：%s' % (u['title'], u['why']))
+              lines.append('</details>')
+          body = '\n'.join(lines)
+          with open('body.md', 'w', encoding='utf-8') as f:
+              f.write(body)
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as f:
+              f.write('count=%d\n' % len(changed))
+          PY
+
+      - name: 有修正就開 issue
+        if: steps.report.outputs.count != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('body.md', 'utf8');
+            const title = `法規更新提醒：${{ steps.report.outputs.count }} 部法規可能已修正`;
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'law-update'
+            });
+            if (issues.length) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: issues[0].number,
+                body: `### ${new Date().toISOString().slice(0,10)} 檢查結果\n\n${body}`
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title, body, labels: ['law-update']
+              });
+            }
+
+      - name: 上傳完整報告
+        uses: actions/upload-artifact@v4
+        with:
+          name: law-check-report
+          path: |
+            report.txt
+            result.json
