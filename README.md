@@ -144,7 +144,17 @@ python tools/build_editorial.py # 重新產生單檔版
 ### 法規是否修正，每月自動檢查
 `.github/workflows/check-law-updates.yml` 每月 1 日會執行 `tools/check_updates.py`，
 逐部比對站上記錄的修正日期與來源網站的現行版本，發現有更新就自動開（或更新）一張
-`law-update` 標籤的 issue，列出哪幾部法規需要重新擷取。也可以在 Actions 頁面手動觸發。
+`law-update` 標籤的 issue，列出哪幾部法規需要重新擷取。也可以在 Actions 頁面手動觸發，
+每次執行的結果摘要會顯示在該次 run 的頁面上。
+
+> **工程會法規在 GitHub 上驗不到。** 全國法規資料庫（43 部）從 GitHub 的美國機房連線正常，
+> 但工程會主管法規系統 `lawweb.pcc.gov.tw` 的 47 部會連線逾時（推測限制國外連線）。
+> 排程檢查因此只涵蓋全國法規資料庫的部分，摘要會明白標示有幾部「來源站無回應」。
+> 要完整比對全部 90 部，請在台灣本機執行：
+>
+> ```bash
+> python tools/check_updates.py
+> ```
 
 ### 檔案結構
 
